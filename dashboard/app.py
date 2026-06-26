@@ -1,3 +1,8 @@
+"""Dashboard Streamlit — outil décisionnel de rétention client (dark mode).
+
+Le dashboard consomme l'API FastAPI (il ne charge jamais le modèle directement).
+Design « Signal » sombre : le risque du client est le point focal.
+"""
 from __future__ import annotations
 
 import sys
@@ -12,9 +17,11 @@ import streamlit as st
 SRC = Path(__file__).resolve().parents[1] / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
-from churn.config import load_config, resolve  
+from churn.config import load_config, resolve  # noqa: E402
 
-
+# --------------------------------------------------------------------------- #
+# Configuration & jetons de design (palette sombre)
+# --------------------------------------------------------------------------- #
 st.set_page_config(page_title="Rétention Client", page_icon="📉", layout="wide")
 
 CFG = load_config()
@@ -22,46 +29,62 @@ API_URL = CFG["api"]["url"]
 TARGET = CFG["data"]["target"]
 ID_COL = CFG["data"]["id_column"]
 
-INK, MUTED, PRIMARY = "#1A2233", "#6B7385", "#4F46E5"
-GREEN, AMBER, RED, BORDER = "#16A34A", "#F59E0B", "#E11D48", "#E6E9EF"
+BG, SURFACE, BORDER = "#0B0E14", "#151A23", "#262E3D"
+INK, MUTED, PRIMARY = "#E7EAF0", "#8B93A7", "#818CF8"
+GREEN, AMBER, RED = "#34D399", "#FBBF24", "#FB7185"
 RISK_COLOR = {"faible": GREEN, "modéré": AMBER, "élevé": RED}
-RISK_BG = {"faible": "#ECFDF3", "modéré": "#FEF6E7", "élevé": "#FEECEF"}
+RISK_BG = {"faible": "#10241C", "modéré": "#2A2310", "élevé": "#2A1620"}
 
 st.markdown(
     """
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     html, body, .stApp, [class*="css"] { font-family:'Inter',-apple-system,Segoe UI,sans-serif; }
-    .stApp { background:#F7F8FA; }
+    .stApp { background:#0B0E14; }
     #MainMenu, footer, header { visibility:hidden; }
-    .block-container { padding-top:2.2rem; padding-bottom:3rem; max-width:1120px; }
+    .block-container { padding:1.8rem 2.5rem 3rem; max-width:1600px; }
     .hdr { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.6rem; }
-    .hdr h1 { font-size:1.7rem; font-weight:700; letter-spacing:-.02em; color:#1A2233; margin:0; }
-    .hdr p { color:#6B7385; margin:.25rem 0 0; font-size:.95rem; }
-    .eyebrow { font-size:.7rem; letter-spacing:.13em; text-transform:uppercase; color:#6B7385; font-weight:600; margin:.2rem 0 .7rem; }
-    .kpi-row { display:flex; gap:16px; margin-bottom:.5rem; }
-    .kpi { flex:1; background:#fff; border:1px solid #E6E9EF; border-radius:16px; padding:1.1rem 1.25rem; }
-    .kpi .label { font-size:.72rem; color:#6B7385; font-weight:600; text-transform:uppercase; letter-spacing:.05em; }
-    .kpi .value { font-size:2rem; font-weight:700; color:#1A2233; line-height:1.1; margin-top:.3rem; }
-    .chip { display:inline-flex; align-items:center; gap:.45rem; padding:.32rem .8rem; border-radius:999px; font-weight:600; font-size:.85rem; }
-    .status { display:inline-flex; align-items:center; gap:.45rem; padding:.3rem .7rem; border-radius:999px; font-size:.8rem; font-weight:600; border:1px solid #E6E9EF; background:#fff; color:#6B7385; }
+    .hdr h1 { font-size:1.8rem; font-weight:700; letter-spacing:-.02em; color:#E7EAF0; margin:0; }
+    .hdr p { color:#8B93A7; margin:.3rem 0 0; font-size:.96rem; }
+    .eyebrow { font-size:.7rem; letter-spacing:.14em; text-transform:uppercase; color:#818CF8; font-weight:700; margin:.2rem 0 .8rem; }
+    .kpi-row { display:flex; gap:18px; margin-bottom:.5rem; }
+    .kpi { flex:1; background:#151A23; border:1px solid #262E3D; border-radius:16px; padding:1.2rem 1.4rem; }
+    .kpi .label { font-size:.72rem; color:#8B93A7; font-weight:600; text-transform:uppercase; letter-spacing:.06em; }
+    .kpi .value { font-size:2.1rem; font-weight:700; color:#E7EAF0; line-height:1.1; margin-top:.35rem; }
+    .chip { display:inline-flex; align-items:center; gap:.5rem; padding:.4rem .9rem; border-radius:999px; font-weight:600; font-size:.9rem; }
+    .status { display:inline-flex; align-items:center; gap:.5rem; padding:.35rem .8rem; border-radius:999px; font-size:.8rem; font-weight:600; border:1px solid #262E3D; background:#151A23; color:#8B93A7; }
     .dot { width:9px; height:9px; border-radius:50%; display:inline-block; }
-    .panel { background:#fff; border:1px solid #E6E9EF; border-radius:18px; padding:1.4rem 1.5rem; }
-    .sig { display:flex; justify-content:space-between; align-items:center; padding:.6rem 0; border-bottom:1px solid #F0F2F5; }
+    .panel { background:#151A23; border:1px solid #262E3D; border-radius:18px; padding:1.4rem 1.6rem; }
+    .sig { display:flex; justify-content:space-between; align-items:center; padding:.62rem 0; border-bottom:1px solid #1F2733; }
     .sig:last-child { border-bottom:none; }
-    .sig .name { color:#1A2233; font-weight:500; font-size:.92rem; }
-    .sig .val { display:flex; align-items:center; gap:.5rem; color:#6B7385; font-weight:600; font-size:.92rem; }
-    .empty { text-align:center; color:#9aa1b1; padding:3.2rem 1rem; border:1px dashed #D9DEE7; border-radius:18px; }
-    .empty .big { font-size:2.2rem; margin-bottom:.4rem; }
-    .stTabs [data-baseweb="tab-list"] { gap:6px; }
+    .sig .name { color:#E7EAF0; font-weight:500; font-size:.95rem; }
+    .sig .val { display:flex; align-items:center; gap:.55rem; color:#8B93A7; font-weight:600; font-size:.95rem; }
+    .empty { text-align:center; color:#6B7488; padding:3.6rem 1rem; border:1px dashed #2A3344; border-radius:18px; background:#0F141D; }
+    .empty .big { font-size:2.4rem; margin-bottom:.5rem; }
+    .stTabs [data-baseweb="tab-list"] { gap:8px; }
     .stTabs [data-baseweb="tab"] { font-weight:600; }
+    div[data-testid="stImage"] img { border-radius:10px; }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
 
+def style_fig(fig, height):
+    fig.update_layout(
+        height=height, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+        margin=dict(l=10, r=10, t=10, b=10), font={"family": "Inter", "color": INK},
+    )
+    fig.update_xaxes(gridcolor=BORDER, zerolinecolor=BORDER, linecolor=BORDER,
+                     tickfont={"color": MUTED})
+    fig.update_yaxes(gridcolor=BORDER, zerolinecolor=BORDER, linecolor=BORDER,
+                     tickfont={"color": MUTED})
+    return fig
 
+
+# --------------------------------------------------------------------------- #
+# Données & API (mis en cache)
+# --------------------------------------------------------------------------- #
 @st.cache_data
 def load_dataset() -> pd.DataFrame:
     return pd.read_csv(resolve(CFG["data"]["path"]))
@@ -108,23 +131,23 @@ def risk_gauge(proba: float, threshold: float, color: str) -> go.Figure:
     fig = go.Figure(go.Indicator(
         mode="gauge+number",
         value=proba * 100,
-        number={"suffix": "%", "font": {"size": 46, "color": INK, "family": "Inter"}},
+        number={"suffix": "%", "font": {"size": 52, "color": INK, "family": "Inter"}},
         gauge={
             "axis": {"range": [0, 100], "tickwidth": 0, "tickcolor": "rgba(0,0,0,0)",
                      "tickfont": {"color": MUTED, "size": 11}},
-            "bar": {"color": color, "thickness": 0.30},
+            "bar": {"color": color, "thickness": 0.32},
             "bgcolor": "rgba(0,0,0,0)",
             "borderwidth": 0,
             "steps": [
-                {"range": [0, 33], "color": "#ECFDF3"},
-                {"range": [33, 66], "color": "#FEF6E7"},
-                {"range": [66, 100], "color": "#FEECEF"},
+                {"range": [0, 33], "color": "#10241C"},
+                {"range": [33, 66], "color": "#2A2310"},
+                {"range": [66, 100], "color": "#2A1620"},
             ],
-            "threshold": {"line": {"color": MUTED, "width": 2}, "thickness": 0.8,
+            "threshold": {"line": {"color": INK, "width": 2}, "thickness": 0.8,
                           "value": threshold * 100},
         },
     ))
-    fig.update_layout(height=260, margin=dict(l=24, r=24, t=20, b=0),
+    fig.update_layout(height=300, margin=dict(l=24, r=24, t=24, b=0),
                       paper_bgcolor="rgba(0,0,0,0)", font={"family": "Inter"})
     return fig
 
@@ -150,7 +173,9 @@ def profile_signals(p: dict):
 SIG_DOT = {"risk": RED, "warn": AMBER, "ok": GREEN}
 
 
-
+# --------------------------------------------------------------------------- #
+# En-tête
+# --------------------------------------------------------------------------- #
 df = load_dataset()
 online = api_online()
 status_dot = GREEN if online else RED
@@ -171,7 +196,9 @@ st.markdown(
 
 tab_score, tab_kpi, tab_models = st.tabs(["  Évaluer un client  ", "  Vue d'ensemble  ", "  Modèles  "])
 
-
+# --------------------------------------------------------------------------- #
+# Onglet 1 — Évaluer un client (HÉRO)
+# --------------------------------------------------------------------------- #
 with tab_score:
     base = default_profile(df)
     left, right = st.columns([5, 7], gap="large")
@@ -222,14 +249,13 @@ with tab_score:
             st.plotly_chart(risk_gauge(res["churn_probability"], res["threshold"], color),
                             use_container_width=True, config={"displayModeBar": False})
             st.markdown(
-                f'<div style="text-align:center;margin-top:-.5rem">'
+                f'<div style="text-align:center;margin-top:-.6rem">'
                 f'<span class="chip" style="background:{RISK_BG[level]};color:{color}">'
                 f'<span class="dot" style="background:{color}"></span>Risque {level} · {verdict}</span></div>',
                 unsafe_allow_html=True,
             )
 
-            # Signaux du profil
-            st.markdown('<div class="eyebrow" style="margin-top:1.4rem">Signaux du profil</div>',
+            st.markdown('<div class="eyebrow" style="margin-top:1.5rem">Signaux du profil</div>',
                         unsafe_allow_html=True)
             rows = "".join(
                 f'<div class="sig"><span class="name">{name}</span>'
@@ -238,7 +264,6 @@ with tab_score:
             )
             st.markdown(f'<div class="panel">{rows}</div>', unsafe_allow_html=True)
 
-            # Simulation d'action de rétention
             if st.button("⟳ Simuler une action de rétention", use_container_width=True):
                 scen = dict(prof)
                 scen["nps_score"] = min(100, prof["nps_score"] + 40)
@@ -261,7 +286,9 @@ with tab_score:
         else:
             st.caption("Lancez `make train` pour générer ces graphiques.")
 
-
+# --------------------------------------------------------------------------- #
+# Onglet 2 — Vue d'ensemble
+# --------------------------------------------------------------------------- #
 with tab_kpi:
     rate = df[TARGET].mean()
     st.markdown(
@@ -275,7 +302,7 @@ with tab_kpi:
         unsafe_allow_html=True,
     )
 
-    st.markdown('<div class="eyebrow" style="margin-top:1.4rem">Le signal le plus fort : les échecs de paiement</div>',
+    st.markdown('<div class="eyebrow" style="margin-top:1.5rem">Le signal le plus fort : les échecs de paiement</div>',
                 unsafe_allow_html=True)
     pf = (df.groupby("payment_failures")[TARGET].mean() * 100).reset_index()
     pf.columns = ["payment_failures", "churn_pct"]
@@ -283,9 +310,9 @@ with tab_kpi:
                  labels={"payment_failures": "Paiements ratés", "churn_pct": "Taux de churn (%)"})
     fig.update_traces(marker_color=PRIMARY)
     fig.add_hline(y=rate * 100, line_dash="dot", line_color=MUTED,
-                  annotation_text=f"Moyenne {rate:.0%}", annotation_position="top left")
-    fig.update_layout(height=340, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                      margin=dict(l=10, r=10, t=10, b=10), font={"family": "Inter", "color": INK})
+                  annotation_text=f"Moyenne {rate:.0%}", annotation_position="top left",
+                  annotation_font_color=MUTED)
+    style_fig(fig, 360)
     st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
     st.caption("Au-delà de 2 paiements ratés, le risque de départ est 2 à 3 fois la moyenne.")
 
@@ -294,12 +321,13 @@ with tab_kpi:
         seg = (df.groupby(col)[TARGET].mean() * 100).reset_index()
         seg.columns = [col, "churn_pct"]
         f2 = px.bar(seg, x=col, y="churn_pct", labels={"churn_pct": "Taux de churn (%)"})
-        f2.update_traces(marker_color="#A5B4FC")
-        f2.update_layout(height=320, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                         margin=dict(l=10, r=10, t=10, b=10), font={"family": "Inter", "color": INK})
+        f2.update_traces(marker_color="#6366F1")
+        style_fig(f2, 340)
         st.plotly_chart(f2, use_container_width=True, config={"displayModeBar": False})
 
-
+# --------------------------------------------------------------------------- #
+# Onglet 3 — Modèles
+# --------------------------------------------------------------------------- #
 with tab_models:
     st.markdown('<div class="eyebrow">Performances comparées (validation croisée)</div>',
                 unsafe_allow_html=True)
@@ -307,12 +335,12 @@ with tab_models:
     if comp is not None:
         view = comp[["modele", "pr_auc", "roc_auc", "recall"]].copy()
         best = view["pr_auc"].idxmax()
-        fig = px.bar(view.sort_values("pr_auc"), x="pr_auc", y="modele", orientation="h",
+        ordered = view.sort_values("pr_auc")
+        fig = px.bar(ordered, x="pr_auc", y="modele", orientation="h",
                      labels={"pr_auc": "PR-AUC", "modele": ""})
-        colors = [PRIMARY if i == best else "#C7CDD9" for i in view.sort_values("pr_auc").index]
+        colors = [PRIMARY if i == best else "#3A4358" for i in ordered.index]
         fig.update_traces(marker_color=colors)
-        fig.update_layout(height=300, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                          margin=dict(l=10, r=10, t=10, b=10), font={"family": "Inter", "color": INK})
+        style_fig(fig, 320)
         st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
         st.dataframe(view.round(3), use_container_width=True, hide_index=True)
         st.caption("Le Random Forest offre le meilleur PR-AUC ; le réseau de neurones (MLP) "
