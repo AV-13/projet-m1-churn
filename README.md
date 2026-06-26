@@ -1,7 +1,4 @@
-# Projet M1 — Système Intelligent de Rétention Client (Churn)
-
-**Cours :** EFREI — M1 Dev. Manager Full Stack — Data Science (2025-26)
-**Sujet :** Sujet 2 — Système Intelligent Multi-Modèles pour la Rétention Client et l'Évaluation du Risque de Revenus
+# Projet M1 — Système Intelligent de Rétention Client 
 
 ## Objectif
 
@@ -27,10 +24,3 @@ utilisateur métier via un dashboard interactif et une API REST.
 
 - [`docs/01-specifications-fonctionnelles.md`](docs/01-specifications-fonctionnelles.md) — le *QUOI*
 - [`docs/02-specifications-techniques.md`](docs/02-specifications-techniques.md) — le *COMMENT*
-
-## Livrables attendus (rappel du sujet)
-
-- Code source de la solution + documentation technique
-- Rapport du projet (6 pages)
-- Support de présentation + démo
-- Dépôt Git/GitHub propre et versionné
