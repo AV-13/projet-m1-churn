@@ -1,8 +1,3 @@
-"""Dashboard Streamlit — outil décisionnel de rétention client.
-
-Le dashboard consomme l'API FastAPI (il ne charge jamais le modèle directement).
-Design « Signal » : le risque du client est le point focal ; le reste reste discret.
-"""
 from __future__ import annotations
 
 import sys
@@ -17,11 +12,9 @@ import streamlit as st
 SRC = Path(__file__).resolve().parents[1] / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
-from churn.config import load_config, resolve  # noqa: E402
+from churn.config import load_config, resolve  
 
-# --------------------------------------------------------------------------- #
-# Configuration & jetons de design
-# --------------------------------------------------------------------------- #
+
 st.set_page_config(page_title="Rétention Client", page_icon="📉", layout="wide")
 
 CFG = load_config()
@@ -68,9 +61,7 @@ st.markdown(
 )
 
 
-# --------------------------------------------------------------------------- #
-# Données & API (mis en cache)
-# --------------------------------------------------------------------------- #
+
 @st.cache_data
 def load_dataset() -> pd.DataFrame:
     return pd.read_csv(resolve(CFG["data"]["path"]))
@@ -159,9 +150,7 @@ def profile_signals(p: dict):
 SIG_DOT = {"risk": RED, "warn": AMBER, "ok": GREEN}
 
 
-# --------------------------------------------------------------------------- #
-# En-tête
-# --------------------------------------------------------------------------- #
+
 df = load_dataset()
 online = api_online()
 status_dot = GREEN if online else RED
@@ -182,9 +171,7 @@ st.markdown(
 
 tab_score, tab_kpi, tab_models = st.tabs(["  Évaluer un client  ", "  Vue d'ensemble  ", "  Modèles  "])
 
-# --------------------------------------------------------------------------- #
-# Onglet 1 — Évaluer un client (HÉRO)
-# --------------------------------------------------------------------------- #
+
 with tab_score:
     base = default_profile(df)
     left, right = st.columns([5, 7], gap="large")
@@ -274,9 +261,7 @@ with tab_score:
         else:
             st.caption("Lancez `make train` pour générer ces graphiques.")
 
-# --------------------------------------------------------------------------- #
-# Onglet 2 — Vue d'ensemble
-# --------------------------------------------------------------------------- #
+
 with tab_kpi:
     rate = df[TARGET].mean()
     st.markdown(
@@ -314,9 +299,7 @@ with tab_kpi:
                          margin=dict(l=10, r=10, t=10, b=10), font={"family": "Inter", "color": INK})
         st.plotly_chart(f2, use_container_width=True, config={"displayModeBar": False})
 
-# --------------------------------------------------------------------------- #
-# Onglet 3 — Modèles
-# --------------------------------------------------------------------------- #
+
 with tab_models:
     st.markdown('<div class="eyebrow">Performances comparées (validation croisée)</div>',
                 unsafe_allow_html=True)
