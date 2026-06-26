@@ -277,13 +277,17 @@ with tab_score:
                               delta_color="inverse")
 
     with st.expander("Importance globale des variables (modèle)"):
-        shap_img = resolve(CFG["paths"]["reports_dir"], "figures", "shap_summary.png")
         perm_img = resolve(CFG["paths"]["reports_dir"], "figures", "permutation_importance.png")
-        if shap_img.exists():
-            st.image(str(shap_img))
-        elif perm_img.exists():
+        shap_img = resolve(CFG["paths"]["reports_dir"], "figures", "shap_summary.png")
+        if perm_img.exists():
+            st.markdown("**Quelles variables pèsent le plus** — plus la barre est longue, "
+                        "plus la variable est déterminante.")
             st.image(str(perm_img))
-        else:
+        if shap_img.exists():
+            st.markdown("**Comment chaque variable pousse le risque** — un point = un client ; "
+                        "rouge = valeur élevée, bleu = faible ; à droite = augmente le churn.")
+            st.image(str(shap_img))
+        if not perm_img.exists() and not shap_img.exists():
             st.caption("Lancez `make train` pour générer ces graphiques.")
 
 # --------------------------------------------------------------------------- #

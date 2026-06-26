@@ -36,15 +36,22 @@ def shap_summary(pipeline, X_sample, path, max_display: int = 15) -> bool:
         preprocessor = pipeline.named_steps["preprocessor"]
         model = pipeline.named_steps["model"]
         X_trans = preprocessor.transform(X_sample)
-        feature_names = preprocessor.get_feature_names_out()
+        feature_names = list(preprocessor.get_feature_names_out())
 
-        explainer = shap.Explainer(model, X_trans, feature_names=feature_names)
-        shap_values = explainer(X_trans)
-        # Pour la classification binaire, certains explainers renvoient 2 sorties.
+        # TreeExplainer (modèles à arbres) : explicite et fiable.
+        explainer = shap.TreeExplainer(model)
+        shap_values = explainer.shap_values(X_trans)
+
+        # Classification binaire : ne garder que les valeurs de la classe positive (churn=1).
+        if isinstance(shap_values, list):
+            shap_values = shap_values[1]
+        elif hasattr(shap_values, "ndim") and shap_values.ndim == 3:
+            shap_values = shap_values[:, :, 1]
+
         plt.figure()
         shap.summary_plot(shap_values, X_trans, feature_names=feature_names,
-                          max_display=max_display, show=False)
-        plt.tight_layout(); plt.savefig(path, dpi=120); plt.close()
+                          max_display=max_display, show=False, plot_size=(9, 6))
+        plt.tight_layout(); plt.savefig(path, dpi=120, bbox_inches="tight"); plt.close()
         return True
     except Exception as exc:  # pragma: no cover - SHAP peut échouer selon le modèle
         print(f"[explain] SHAP indisponible ({type(exc).__name__}: {exc}) — "
