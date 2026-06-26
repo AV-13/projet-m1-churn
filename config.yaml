@@ -1,0 +1,25 @@
+# Configuration centrale du projet (chemins relatifs à la racine du projet)
+seed: 42
+
+data:
+  path: data/customer_churn.csv
+  target: churn
+  id_column: customer_id
+  test_size: 0.2
+
+cv:
+  n_splits: 5
+
+training:
+  selection_metric: pr_auc      # métrique de sélection du modèle final
+  threshold_metric: f1          # métrique d'optimisation du seuil de décision
+  balancing: smote              # stratégie de rééquilibrage du modèle final
+
+paths:
+  models_dir: models
+  reports_dir: reports
+
+api:
+  url: http://127.0.0.1:8000
+
+model_version: "1.0.0"
