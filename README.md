@@ -1,6 +1,6 @@
 # Projet M1 — Système Intelligent de Rétention Client 
 
-## Objectif
+## Objectifs
 
 Construire un système d'aide à la décision qui prédit la probabilité qu'un client
 résilie son abonnement (*churn*), explique ce risque, et le met à disposition d'un
