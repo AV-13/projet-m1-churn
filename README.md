@@ -24,3 +24,6 @@ utilisateur métier via un dashboard interactif et une API REST.
 
 - [`docs/01-specifications-fonctionnelles.md`](docs/01-specifications-fonctionnelles.md) — le *QUOI*
 - [`docs/02-specifications-techniques.md`](docs/02-specifications-techniques.md) — le *COMMENT*
+
+## Équipe
+Colin Bazelaire - Augustin Vathonne - Sysko Sarrat - Jathushan SELVARAJAH
